@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ASVP Vulnerable Test App</title>
+</head>
+<body>
+  <h1>ASVP Vulnerable Test App</h1>
+
+  <p>This app is intentionally vulnerable for CI/CD security scanning.</p>
+
+  <form action="/search" method="GET">
+    <label>Search User:</label>
+    <input type="text" name="username" placeholder="Enter username">
+    <button type="submit">Search</button>
+  </form>
+
+  <br>
+
+  <form action="/ping" method="GET">
+    <label>Ping Host:</label>
+    <input type="text" name="host" placeholder="127.0.0.1">
+    <button type="submit">Ping</button>
+  </form>
+
+  <br>
+
+  <form action="/xss" method="GET">
+    <label>Message:</label>
+    <input type="text" name="message" placeholder="Enter message">
+    <button type="submit">Show Message</button>
+  </form>
+
+  <br>
+
+  <a href="/debug">Debug Info</a>
+</body>
+</html>
