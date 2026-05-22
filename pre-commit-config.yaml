@@ -1,0 +1,93 @@
+# AVEROX ASVP — Pre-Commit Security Hooks
+# Hook type: pre-commit (runs on `git commit`, before the commit is created)
+#
+# Install on your machine, NOT inside ASVP:
+#   cd your-project-folder
+#   pip install pre-commit
+#   pre-commit install --hook-type pre-commit
+#
+# Place this file at the repository root: .pre-commit-config.yaml
+
+repos:
+  # ── Secret Detection ─────────────────────────────────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package.lock.json
+
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+
+  # ── SAST — Language-Specific ─────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: ["-r", ".", "-ll"]
+        types: [python]
+
+  - repo: https://github.com/eslint/eslint
+    rev: v8.0.0
+    hooks:
+      - id: eslint
+        additional_dependencies:
+          - eslint-plugin-security@2.1.0
+        types: [javascript, jsx, ts, tsx]
+
+  # ── Semgrep Quick Scan ──────────────────────────────────────────
+  - repo: https://github.com/returntocorp/semgrep
+    rev: v1.45.0
+    hooks:
+      - id: semgrep
+        args:
+          - --config=p/security-audit
+          - --config=p/owasp-top-ten
+          - --config=p/secrets
+          - --error
+          - --quiet
+
+  # ── IaC Security ────────────────────────────────────────────────
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: 3.0.0
+    hooks:
+      - id: checkov
+        args:
+          - --quiet
+          - --framework=terraform,cloudformation,kubernetes,dockerfile
+          - --skip-check=CKV_AWS_144,CKV_AWS_18
+
+  # ── Supply Chain Integrity ───────────────────────────────────────
+  - repo: https://github.com/aquasecurity/trivy
+    rev: v0.48.0
+    hooks:
+      - id: trivy
+        args:
+          - fs
+          - --exit-code=1
+          - --severity=CRITICAL
+          - .
+
+  # ── Container Lint ──────────────────────────────────────────────
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint
+        args: [--failure-threshold, error]
+
+  # ── ASVP Custom Hook (calls ASVP API) ──────────────────────────
+  # Sends staged file diffs to ASVP for an incremental SAST gate.
+  # Reads ASVP_API_TOKEN from the local environment — no token is
+  # embedded in this file.
+  - repo: local
+    hooks:
+      - id: asvp-pre-commit-scan
+        name: ASVP Security Pre-Commit Gate
+        language: script
+        entry: .asvp/pre-commit-hook.sh
+        pass_filenames: false
+        always_run: false
+        stages: [pre-commit]
